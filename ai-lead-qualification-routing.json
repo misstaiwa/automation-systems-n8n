@@ -1,0 +1,514 @@
+{
+  "name": "Lead Capture Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k",
+          "mode": "list",
+          "cachedResultName": "Automation Services Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 983212947,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k/edit#gid=983212947"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        -48
+      ],
+      "id": "36c9e357-79f4-4f04-b317-1585de04bad6",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "sI5WmoWJo52TwJkK",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d76372e7-e57a-4c10-96da-0c19817ee506",
+              "leftValue": "={{ $json.Name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "28166ac9-73f5-40e4-a631-dee924149b90",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "91a9228a-f288-4f7c-8c49-98b6b30b6c46",
+              "leftValue": "={{ $json['What do you want to automate?'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        112
+      ],
+      "id": "d686012f-3abc-4252-bce2-72d401ba63a3",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Return ONLY valid JSON. Do not include explanations or text outside JSON.\nAnalyze this lead and return ONLY valid JSON:\n\n{\n  \"priority\": \"Hot | Warm | Cold\",\n  \"budget\": number,\n  \"urgency\": \"High | Medium | Low\",\n  \"summary\": \"short explanation\"\n}\n\nLead details:\n\nName: {{ $json[\"Name\"] }}\nEmail: {{ $json[\"Email\"] }}\nCompany: {{ $json[\"Company Name\"] }}\nRequest: {{ $json[\"What do you want to automate?\"] }}\nBudget: {{ $json[\"Budget Range\"] }}\nTimeline: {{ $json[\"Timeline\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful assiYou are analyzing a new business lead.\n\nRead the lead details and classify the lead based on urgency, budget, and overall sales potential.\n\nReturn ONLY valid JSON in this exact format:\n\n{\n  \"priority\": \"Hot\",\n  \"budget\": 0,\n  \"urgency\": \"High\",\n  \"summary\": \"short explanation\"\n}\n\nRules:\n- priority must be exactly one of: Hot, Warm, Cold\n- urgency must be exactly one of: High, Medium, Low\n- budget must be a number only\n- summary must be a short one-sentence explanation\n- do not return markdown\n- do not use code fences\n- do not add extra text before or after the JSON\n\nBudget conversion rules:\n- If budget says \"Under $500\", return 300\n- If budget says \"$500 - $1,000\", return 750\n- If budget says \"$1,000 - $2,000\", return 1500\n- If budget says \"$2,000+\", return 2000\n\nUrgency rules:\n- If timeline suggests immediate or urgent need, urgency = High\n- If timeline suggests soon but not immediate, urgency = Medium\n- If timeline suggests flexible or no urgency, urgency = Low\n\nPriority rules:\n- Hot = clear business need + strong budget + urgent timeline\n- Warm = moderate budget or moderate urgency\n- Cold = low budget, vague need, or low urgencystant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -448,
+        -96
+      ],
+      "id": "fe18d83c-dff1-4de3-b21d-bf339bcf52c3",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        272
+      ],
+      "id": "68831544-20f8-48de-b679-750e3a29a5ca",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "ffOYqgu6dJaACAU7",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k",
+          "mode": "list",
+          "cachedResultName": "Automation Services Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1117368254,
+          "mode": "list",
+          "cachedResultName": "processed Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QJL0m1qikb9pah3_e3LNMO4YnIlxXlnjLVnamIMIh0k/edit#gid=1117368254"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "priority  ": "={{ $json.priority }}",
+            "urgency": "={{ $json.urgency }}",
+            "summary": "={{ $json.summary }}",
+            "score": "={{ $json.summary }}",
+            "budget ": "={{ $json.budget }}",
+            "finalPriority": "={{ $json.finalPriority }}"
+          },
+          "matchingColumns": [
+            "priority"
+          ],
+          "schema": [
+            {
+              "id": "priority  ",
+              "displayName": "priority  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "budget ",
+              "displayName": "budget ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "finalPriority",
+              "displayName": "finalPriority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "6fc7261c-276a-42ba-a737-739d49f4a5a0",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nkfWvXqt8zWVYWRx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Filter').item.json.Email }}",
+        "subject": "Re: Your Automation Services Request",
+        "message": "=Subject: We’ve received your request – Let’s move fast\n\nHi {{ $json[\"Name\"] }},\n\nThanks for reaching out regarding {{ $json[\"What do you want to automate?\"] }}.\n\nYour request has been prioritized, and we’ll review it immediately to see how we can support you.\n\nYou can expect a response shortly.\n\nBest,  \n[Your Name / Company]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -32
+      ],
+      "id": "ed9c9a42-e1e2-45a2-8d0e-1656ba00be73",
+      "name": "Send a message",
+      "webhookId": "8c6bb8aa-59f5-4106-a55f-8b8b5e8461db",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "upuZCPzWDoPwWD8U",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5708589940",
+        "text": "=🔥 NEW HOT LEAD\n\nCompany: {{ $json[\"Company Name\"] }}\nName: {{ $json[\"Name\"] }}\n\nBudget: ${{ $json.budget }}\nUrgency: {{ $json.urgency }}\n\nNeed:\n{{ $json[\"What do you want to automate?\"] }}\n\nSummary:\n{{ $json.summary }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -32
+      ],
+      "id": "56154a22-db00-42b2-83b9-79f1cbc43a71",
+      "name": "Send a text message",
+      "webhookId": "23e164e5-6a7d-481e-9cd3-8e86bb0ea9ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "o37GYmPqduMkoGDB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Filter').item.json.Email }}",
+        "subject": "Re: Your Automation Services Request",
+        "message": "=Subject: Thanks for your request\n\nHi {{ $json[\"Name\"] }},\n\nThanks for sharing your automation needs.\n\nWe’ve received your request and will review it shortly. If it aligns with our current scope, we’ll get back to you with next steps.\n\nBest regards,  \n[Your Name / Company]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        160
+      ],
+      "id": "1452cbc2-00c8-4eef-8a12-8e4d53086b4f",
+      "name": "Send a message1",
+      "webhookId": "82834fea-ccdb-49c5-997f-ba6246c531f1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "upuZCPzWDoPwWD8U",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "53b29532-9774-438f-8562-a2e6cbcfbae4",
+              "leftValue": "={{ $json.finalPriority }}",
+              "rightValue": "Hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "3e42d86d-02c6-4db4-8651-3cdce5941f54",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"priority\": \"Hot\",\n  \"budget\": 1000,\n  \"urgency\": \"High\",\n  \"summary\": \"Lead has strong potential and urgent need\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        240
+      ],
+      "id": "b3dae2dc-90dc-482c-8f02-0f323319b50a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json.output ?? $json;\n\nlet score = 0;\n\n// Budget scoring\nif (Number(lead.budget) >= 1000) score += 3;\nelse if (Number(lead.budget) >= 500) score += 2;\nelse score += 1;\n\n// Urgency scoring\nif (lead.urgency === \"High\") score += 3;\nelse if (lead.urgency === \"Medium\") score += 2;\nelse score += 1;\n\n// AI priority scoring\nif (lead.priority === \"Hot\") score += 3;\nelse if (lead.priority === \"Warm\") score += 2;\nelse score += 1;\n\n// Final classification\nlet finalPriority = \"Cold\";\n\nif (score >= 8) finalPriority = \"Hot\";\nelse if (score >= 5) finalPriority = \"Warm\";\n\nreturn [\n  {\n    json: {\n      ...lead,\n      score,\n      finalPriority\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -16
+      ],
+      "id": "abd34334-cce2-4b4e-96e7-7d74e25f13a1",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveDataErrorExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "7464dc63-5293-4121-aeaa-de1aa3502035",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd71f85fdf3d3a2fd46923b4ecc362e91f0a41022c3b05f4bc7b1f44d3d440be"
+  },
+  "id": "qsYto0C0YInfFtrk",
+  "tags": []
+}
